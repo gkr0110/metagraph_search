@@ -1,0 +1,10 @@
+# Minimal conda environment for local development / planemo testing
+name: metagraph-galaxy
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - requests>=2.31
+  - planemo>=0.75

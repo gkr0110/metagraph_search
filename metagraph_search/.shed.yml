@@ -1,0 +1,22 @@
+name: metagraph_search
+owner: govind
+description: >
+  Search petabase-scale biological sequence archives via MetaGraph Online
+  (https://metagraph.ethz.ch), a service by ETH Zurich that indexes DNA,
+  RNA, and protein sequences from NCBI SRA, ENA, and DDBJ using annotated
+  de Bruijn graphs.  This tool wraps the MetaGraph async REST API and returns
+  matched accessions as a tab-separated table.
+long_description: >
+  MetaGraph enables full-text search across hundreds of millions of public
+  sequencing samples using exact k-mer matching or sensitive graph alignment.
+  Supported databases include RefSeq, AllTheBacteria, UHGG, SRA taxonomic
+  subsets (Microbe, Fungi, Plants, Metazoa, Human, Mouse), Tara Oceans,
+  MetaSUB, GnomAD, and UniParc (protein).  An internet connection from the
+  Galaxy server to metagraph.ethz.ch is required.
+homepage_url: https://metagraph.ethz.ch
+remote_repository_url: https://github.com/govind/metagraph_search
+type: unrestricted
+categories:
+  - Sequence Analysis
+  - Metagenomics
+  - Genomics

@@ -1,0 +1,300 @@
+
+
+
+<tool id="metagraph_search" name="MetaGraph Sequence Search" version="1.0.0+galaxy0" profile="23.0">
+    <description>Search petabase-scale biological sequence archives (MetaGraph Online)</description>
+
+    <requirements>
+        <requirement type="package" version="3.9">python</requirement>
+        <requirement type="package" version="2.31">requests</requirement>
+    </requirements>
+
+    <command detect_errors="exit_code"><![CDATA[
+        python '$__tool_directory__/metagraph_search.py'
+            --input '$input_fasta'
+            --databases '$databases'
+            --mode '$search_mode'
+            --sequence-type '$sequence_type'
+            --discovery-threshold $discovery_threshold
+            --top-labels $top_labels
+            #if $search_mode == 'align':
+                --min-exact-match ${align_opts.min_exact_match}
+                --max-alternative-alignments ${align_opts.max_alternative_alignments}
+            #end if
+            --poll-interval 10
+            --max-wait 3600
+            --output '$output'
+            $debug
+            $test_mock
+    ]]></command>
+
+    <inputs>
+        <!-- ============================================================ -->
+        <!-- Input sequences                                               -->
+        <!-- ============================================================ -->
+        <param name="input_fasta" type="data" format="fasta,fasta.gz"
+               label="Input sequences (FASTA)"
+               help="DNA, RNA, or protein sequences in FASTA format.
+                     Standard limit: 10 sequences / 55,000 characters total.
+                     Larger inputs are accepted but may be queued longer."/>
+
+        <param name="sequence_type" type="select"
+               label="Molecule type"
+               help="Choose 'Nucleotide' for DNA/RNA sequences; 'Amino acid' for protein (UniParc only).">
+            <option value="nucleotide" selected="true">Nucleotide (DNA / RNA)</option>
+            <option value="amino_acid">Amino acid (protein)</option>
+        </param>
+
+        <!-- ============================================================ -->
+        <!-- Database selection                                            -->
+        <!-- ============================================================ -->
+        <param name="databases" type="select" multiple="true" optional="false"
+               label="Database(s) to search"
+               help="Select one or more databases. Nucleotide databases require DNA/RNA input; UniParc requires amino acid input.">
+
+            <!-- Reference / assembled -->
+            <option value="refseq33m" selected="true">RefSeq — NCBI Reference Sequences (32.9 M accessions; DNA · Align · Coordinates)</option>
+            <option value="atb">AllTheBacteria — bacterial WGS assemblies (2.76 M genomes; DNA · Coordinates)</option>
+            <option value="gnomad">GnomAD — human genomic variation (29 chromosomal segments; DNA · Align)</option>
+
+            <!-- Human gut / microbiome -->
+            <option value="uhgg">UHGG Catalog — Unified Human Gut Genome catalogue v1 (4,644 genomes; DNA · Align)</option>
+            <option value="uhgg_all">UHGG All — all UHGG non-redundant genomes (287 K genomes; DNA · Align)</option>
+            <option value="sra-metagut">SRA MetaGut — human gut metagenome (241 K samples; DNA/RNA · Align)</option>
+
+            <!-- Marine / environment -->
+            <option value="tara-oceans">Tara Oceans Genomes — ocean metagenomes with coordinates (34 K genomes; DNA · Align · Coordinates)</option>
+            <option value="tara-assemblies">Tara Oceans Scaffolds — assembled ocean scaffolds (318 M scaffolds; DNA · Align)</option>
+
+            <!-- Urban microbiome -->
+            <option value="metasub41">MetaSUB — urban microbiome k=41 (4,220 city samples; DNA · Align)</option>
+            <option value="metasub19">MetaSUB k=19 — urban microbiome k=19 (4,220 city samples; DNA · Align)</option>
+
+            <!-- SRA taxonomic subsets -->
+            <option value="sra-microbe">SRA Microbe — microbial WGS (446 K samples; DNA/RNA · Align)</option>
+            <option value="sra-fungi">SRA Fungi — fungal sequences (122 K samples; DNA/RNA · Align)</option>
+            <option value="sra-plants">SRA Plants — plant sequences (532 K samples; DNA/RNA · Align)</option>
+            <option value="sra-metazoa">SRA Metazoa — animal sequences excl. human (805 K samples; DNA/RNA · Align)</option>
+            <option value="sra-human">SRA Human — human raw reads (436 K samples; DNA/RNA · Align)</option>
+            <option value="sra-mus_muculus">SRA Mus musculus — mouse raw reads (58 K samples; DNA/RNA · Align)</option>
+
+            <!-- Logan assembled contigs -->
+            <option value="sra-logan-chunks">SRA Logan Contigs — pre-assembled SRA contigs (21.4 M samples; DNA/RNA)</option>
+
+            <!-- Protein -->
+            <option value="uniparc">UniParc — UniProt Archive protein sequences (541 M proteins; Amino Acids · Coordinates)</option>
+        </param>
+
+        <!-- ============================================================ -->
+        <!-- Search mode                                                   -->
+        <!-- ============================================================ -->
+        <param name="search_mode" type="select"
+               label="Search mode"
+               help="Exact match is fast and suitable for high-identity queries.
+                     Alignment is more sensitive but significantly slower — use for
+                     divergent or noisy sequences.">
+            <option value="exact" selected="true">Exact match (fast · k-mer based)</option>
+            <option value="align">Alignment (sensitive · seed-chain-extend)</option>
+        </param>
+
+        <!-- ============================================================ -->
+        <!-- Core search parameters                                        -->
+        <!-- ============================================================ -->
+        <param name="discovery_threshold" type="float" value="0.5"
+               min="0.0" max="1.0"
+               label="Discovery threshold"
+               help="Minimum fraction of query k-mers that must match a database label
+                     (0.0 = most permissive / most hits; 1.0 = strictest / fewest hits).
+                     Recommended starting value: 0.5."/>
+
+        <param name="top_labels" type="integer" value="100"
+               min="1" max="1000"
+               label="Maximum matched accessions per database"
+               help="Caps the number of returned labels per database per query."/>
+
+        <!-- ============================================================ -->
+        <!-- Alignment-only options                                        -->
+        <!-- ============================================================ -->
+        <section name="align_opts" title="Alignment options" expanded="false">
+            <param name="min_exact_match" type="float" value="0.0"
+                   min="0.0" max="1.0"
+                   label="Minimum seed coverage (alignment only)"
+                   help="Minimum fraction of the query that must be covered by exact-match
+                         seeds before alignment is attempted. Increase to speed up alignment
+                         at the cost of sensitivity."/>
+            <param name="max_alternative_alignments" type="integer" value="1"
+                   min="1" max="10"
+                   label="Maximum alternative alignments (alignment only)"
+                   help="Number of distinct alignments to return per sequence."/>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Debugging                                                     -->
+        <!-- ============================================================ -->
+        <param name="debug" type="boolean" truevalue="--debug" falsevalue=""
+               checked="false"
+               label="Debug mode"
+               help="Print raw API JSON to the tool's stderr log. Useful for troubleshooting."/>
+
+        <!-- Hidden parameter: used by planemo tests to inject mock flag -->
+        <param name="test_mock" type="hidden" value=""/>
+    </inputs>
+
+    <!-- ================================================================ -->
+    <!-- Outputs                                                           -->
+    <!-- ================================================================ -->
+    <outputs>
+        <data name="output" format="tabular"
+              label="MetaGraph search results on ${on_string}"/>
+    </outputs>
+
+    <!-- ================================================================ -->
+    <!-- Tests                                                             -->
+    <!-- ================================================================ -->
+    <tests>
+        <!-- Test 1: mock mode.
+             Validates the full pipeline (FASTA parsing, result flattening,
+             TSV writing) without a live network connection.
+             The hidden test_mock param passes the mock flag to the Python
+             script so it returns a built-in response instead of calling
+             the MetaGraph API. -->
+        <test expect_num_outputs="1">
+            <param name="input_fasta" value="test_input.fa"/>
+            <param name="databases" value="refseq33m"/>
+            <param name="sequence_type" value="nucleotide"/>
+            <param name="search_mode" value="exact"/>
+            <param name="discovery_threshold" value="0.5"/>
+            <param name="top_labels" value="10"/>
+            <param name="debug" value="false"/>
+            <param name="test_mock" value="--mock"/>
+            <output name="output" file="expected_output.tabular" compare="contains"/>
+        </test>
+    </tests>
+
+    <!-- ================================================================ -->
+    <!-- Help                                                              -->
+    <!-- ================================================================ -->
+    <help><![CDATA[
+
+.. class:: infomark
+
+**MetaGraph Sequence Search** submits your sequences to the
+`MetaGraph Online <https://metagraph.ethz.ch>`_ service at ETH Zurich and
+returns matched accessions as a tab-separated table.  An internet connection
+from the Galaxy server is required.
+
+-----
+
+**What is MetaGraph?**
+
+MetaGraph is a petabase-scale full-text search engine for biological sequences.
+It indexes raw sequencing data from NCBI SRA, ENA, and DDBJ using compact
+annotated de Bruijn graphs, enabling rapid query of hundreds of millions of
+samples.
+
+-----
+
+**Inputs**
+
+*FASTA sequences*
+    One or more DNA, RNA, or protein sequences.  Standard jobs support up to
+    10 sequences / 55,000 characters.  Longer inputs are accepted but may be
+    queued.
+
+*Molecule type*
+    Select **Nucleotide** for DNA/RNA queries (all databases except UniParc)
+    or **Amino acid** for protein queries (UniParc only).
+
+*Databases*
+    Choose one or more indexes.  Key databases:
+
+    ==================== ======================================================
+    Database             Description
+    ==================== ======================================================
+    RefSeq               NCBI Reference Sequences — curated assemblies (32.9 M)
+    AllTheBacteria       All public bacterial WGS assemblies (2.76 M genomes)
+    UHGG / UHGG All      Human gut genome catalogues
+    SRA MetaGut          Human gut metagenomes (241 K samples)
+    SRA Microbe/Fungi…   Taxonomic SRA subsets (DNA/RNA raw reads)
+    Tara Oceans          Marine metagenomes / assembled genomes
+    MetaSUB              Urban microbiome (city samples worldwide)
+    GnomAD               Human genomic variation
+    UniParc              Comprehensive protein sequences (551 M, amino acid input)
+    ==================== ======================================================
+
+-----
+
+**Search modes**
+
+*Exact match (fast)*
+    K-mer based search.  Each k-mer in the query is looked up exactly in the
+    index.  Suitable for high-identity sequences.
+
+*Alignment (sensitive)*
+    Seed–chain–extend alignment to the de Bruijn graph.  Captures variants,
+    sequencing errors, and divergent sequences.  Significantly slower.
+
+-----
+
+**Parameters**
+
+*Discovery threshold*
+    The minimum fraction of query k-mers that must be found in a database label
+    for that label to appear in the results.  Range 0.0–1.0.
+
+    - **0.0** — return any label that shares at least one k-mer (most hits)
+    - **0.5** — default; balanced sensitivity / specificity
+    - **1.0** — all k-mers must match (fewest, highest-confidence hits)
+
+*Maximum matched accessions*
+    Hard cap on returned labels per database per query sequence.
+
+-----
+
+**Output columns**
+
+================  =============================================================
+Column            Description
+================  =============================================================
+query             FASTA sequence name (first word of the ``>`` header line)
+database          MetaGraph database ID searched
+label             Matched sequence/accession ID (e.g. UniParc UPI*, RefSeq NC_*)
+normalized_score  Fraction of query k-mers matched (0.0–1.0); higher = closer match
+kmer_count        Raw count of matching k-mers
+coordinates       K-mer coordinate ranges in the matched sequence (if available)
+organism          Organism name from the enrichment metadata
+taxid             NCBI Taxonomy ID of the matched organism
+================  =============================================================
+
+-----
+
+**Notes**
+
+- Results are fetched immediately after the search completes; you do not need
+  to revisit the MetaGraph website.
+- The tool polls the API every 10 seconds; large queries against multiple
+  databases may take several minutes to hours.
+- Results on the MetaGraph server expire after 48 hours; this tool downloads
+  them automatically.
+
+-----
+
+**Citation**
+
+If you use MetaGraph in your research, please cite:
+
+    Karasikov et al. (2023) *Indexing and analysing nucleotide archives at
+    petabase scale*. Genome Biology.
+    https://doi.org/10.1186/s13059-023-02958-x
+
+    ]]></help>
+
+    <!-- ================================================================ -->
+    <!-- Citations                                                         -->
+    <!-- ================================================================ -->
+    <citations>
+        <citation type="doi">10.1186/s13059-023-02958-x</citation>
+        <citation type="doi">10.1101/2020.10.01.322164</citation>
+    </citations>
+
+</tool>

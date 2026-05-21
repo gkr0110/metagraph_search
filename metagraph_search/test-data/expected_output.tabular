@@ -1,0 +1,2 @@
+query	database	label	normalized_score	kmer_count	coordinates	organism	taxid
+test_seq1	refseq33m	NC_000913.3	0.98	310	0-0-309	Escherichia coli str. K-12 substr. MG1655	511145

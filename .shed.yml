@@ -14,7 +14,7 @@ long_description: >
   MetaSUB, GnomAD, and UniParc (protein).  An internet connection from the
   Galaxy server to metagraph.ethz.ch is required.
 homepage_url: https://metagraph.ethz.ch
-remote_repository_url: https://github.com/govind/metagraph_search
+remote_repository_url: https://github.com/gkr0110/metagraph_search
 type: unrestricted
 categories:
   - Sequence Analysis

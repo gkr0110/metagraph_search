@@ -1,0 +1,120 @@
+{
+    "summary": {
+        "num_errors": 0,
+        "num_failures": 0,
+        "num_skips": 0,
+        "num_tests": 1
+    },
+    "tests": [
+        {
+            "data": {
+                "inputs": {
+                    "databases": "refseq33m",
+                    "debug": false,
+                    "discovery_threshold": "0.5",
+                    "input_fasta": {
+                        "id": "34e4bb5478081c31",
+                        "src": "hda"
+                    },
+                    "search_mode": "exact",
+                    "sequence_type": "nucleotide",
+                    "test_mock": "--mock",
+                    "top_labels": "10"
+                },
+                "job": {
+                    "command_line": "python '/Users/govind/Documents/Claude/Projects/metagraph wrapper/metagraph_search/metagraph_search.py' --input '/private/var/folders/nt/nd067x0s1jzcdh_bgx4vp3cm0000gn/T/tmp9x72onxv/files/b/9/b/dataset_b9b28731-df83-4a42-bbf1-47a306fce86a.dat' --databases 'refseq33m' --mode 'exact' --sequence-type 'nucleotide' --discovery-threshold 0.5 --top-labels 10 --poll-interval 10 --max-wait 3600 --output '/private/var/folders/nt/nd067x0s1jzcdh_bgx4vp3cm0000gn/T/tmp9x72onxv/job_working_directory/000/2/outputs/dataset_3767a06d-8bcc-4f93-b5ea-db545d339d2e.dat'  --mock",
+                    "command_version": "",
+                    "copied_from_job_id": null,
+                    "create_time": "2026-05-21T06:38:51.773630",
+                    "dependencies": [],
+                    "exit_code": 0,
+                    "external_id": "42016",
+                    "galaxy_version": "26.0",
+                    "handler": null,
+                    "history_id": "34e4bb5478081c31",
+                    "id": "c078eaf334b90f25",
+                    "inputs": {
+                        "input_fasta": {
+                            "id": "34e4bb5478081c31",
+                            "src": "hda",
+                            "uuid": "b9b28731-df83-4a42-bbf1-47a306fce86a"
+                        }
+                    },
+                    "job_messages": [],
+                    "job_metrics": [
+                        {
+                            "name": "galaxy_slots",
+                            "plugin": "core",
+                            "raw_value": "1.0000000",
+                            "title": "Cores Allocated",
+                            "value": "1"
+                        },
+                        {
+                            "name": "start_epoch",
+                            "plugin": "core",
+                            "raw_value": "1779345533.0000000",
+                            "title": "Job Start Time",
+                            "value": "2026-05-21 12:08:53"
+                        },
+                        {
+                            "name": "end_epoch",
+                            "plugin": "core",
+                            "raw_value": "1779345537.0000000",
+                            "title": "Job End Time",
+                            "value": "2026-05-21 12:08:57"
+                        },
+                        {
+                            "name": "runtime_seconds",
+                            "plugin": "core",
+                            "raw_value": "4.0000000",
+                            "title": "Job Runtime (Wall Clock)",
+                            "value": "4 seconds"
+                        }
+                    ],
+                    "job_runner_name": null,
+                    "job_stderr": "",
+                    "job_stdout": "",
+                    "model_class": "Job",
+                    "output_collections": {},
+                    "outputs": {
+                        "output": {
+                            "id": "c078eaf334b90f25",
+                            "src": "hda",
+                            "uuid": "3767a06d-8bcc-4f93-b5ea-db545d339d2e"
+                        }
+                    },
+                    "params": {
+                        "__input_ext": "\"input\"",
+                        "align_opts": "{\"max_alternative_alignments\": \"1\", \"min_exact_match\": \"0.0\"}",
+                        "chromInfo": "\"/private/var/folders/nt/nd067x0s1jzcdh_bgx4vp3cm0000gn/T/tmp9x72onxv/galaxy-dev/tool-data/shared/ucsc/chrom/?.len\"",
+                        "databases": "\"refseq33m\"",
+                        "dbkey": "\"?\"",
+                        "debug": "false",
+                        "discovery_threshold": "\"0.5\"",
+                        "search_mode": "\"exact\"",
+                        "sequence_type": "\"nucleotide\"",
+                        "test_mock": "\"--mock\"",
+                        "top_labels": "\"10\""
+                    },
+                    "state": "ok",
+                    "stderr": "Parsing FASTA input...\nFound 1 sequence(s) to search against 1 database(s): refseq33m\n\n[1/1] Sequence: test_seq1 (319 bp)\n  [MOCK] Returning built-in mock results\n  [MOCK] 2 hit(s)\n\nWriting 2 total hit(s) to /private/var/folders/nt/nd067x0s1jzcdh_bgx4vp3cm0000gn/T/tmp9x72onxv/job_working_directory/000/2/outputs/dataset_3767a06d-8bcc-4f93-b5ea-db545d339d2e.dat\nDone.\n",
+                    "stdout": "",
+                    "tool_id": "metagraph_search",
+                    "tool_stderr": "Parsing FASTA input...\nFound 1 sequence(s) to search against 1 database(s): refseq33m\n\n[1/1] Sequence: test_seq1 (319 bp)\n  [MOCK] Returning built-in mock results\n  [MOCK] 2 hit(s)\n\nWriting 2 total hit(s) to /private/var/folders/nt/nd067x0s1jzcdh_bgx4vp3cm0000gn/T/tmp9x72onxv/job_working_directory/000/2/outputs/dataset_3767a06d-8bcc-4f93-b5ea-db545d339d2e.dat\nDone.\n",
+                    "tool_stdout": "",
+                    "update_time": "2026-05-21T06:38:57.065852",
+                    "user_email": "planemo@galaxyproject.org",
+                    "user_id": "34e4bb5478081c31"
+                },
+                "status": "success",
+                "test_index": 0,
+                "time_seconds": 12.50316071510315,
+                "tool_id": "metagraph_search",
+                "tool_version": "1.0.0+galaxy0"
+            },
+            "has_data": true,
+            "id": "metagraph_search-0"
+        }
+    ],
+    "version": "0.1"
+}

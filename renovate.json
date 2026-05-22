@@ -1,0 +1,51 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "regexManagers": [
+    {
+      "fileMatch": ["^metagraph_search\\.xml$"],
+      "matchStrings": [
+        "<requirement type=\"package\" version=\"(?<currentValue>[^\"]+)\">requests</requirement>"
+      ],
+      "depNameTemplate": "requests",
+      "datasourceTemplate": "conda",
+      "registryUrlTemplate": "https://api.anaconda.org/package/conda-forge"
+    },
+    {
+      "fileMatch": ["^metagraph_search\\.xml$"],
+      "matchStrings": [
+        "<requirement type=\"package\" version=\"(?<currentValue>[^\"]+)\">python</requirement>"
+      ],
+      "depNameTemplate": "python",
+      "datasourceTemplate": "conda",
+      "registryUrlTemplate": "https://api.anaconda.org/package/conda-forge"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["conda"],
+      "matchPackageNames": ["requests"],
+      "labels": ["dependencies", "conda-forge"],
+      "schedule": ["on the 1st day of the month"],
+      "prBodyNotes": [
+        "### Checklist before merging",
+        "- [ ] Check [requests changelog](https://requests.readthedocs.io/en/latest/community/updates/) for breaking changes",
+        "- [ ] Run `planemo test metagraph_search.xml` to verify the tool still works",
+        "- [ ] Run `planemo shed_update --shed_target toolshed` after merging"
+      ]
+    },
+    {
+      "matchDatasources": ["conda"],
+      "matchPackageNames": ["python"],
+      "labels": ["dependencies", "conda-forge"],
+      "schedule": ["on the 1st day of the month"],
+      "minimumReleaseAge": "90 days",
+      "prBodyNotes": [
+        "### Checklist before merging",
+        "- [ ] Verify the new Python version is available on the target Galaxy instance",
+        "- [ ] Run `planemo test metagraph_search.xml` to verify the tool still works",
+        "- [ ] Run `planemo shed_update --shed_target toolshed` after merging"
+      ]
+    }
+  ]
+}

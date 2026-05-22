@@ -1,0 +1,95 @@
+name: Check conda-forge dependencies for updates
+
+on:
+  schedule:
+    - cron: '0 8 1 * *'   # First day of every month at 08:00 UTC
+  workflow_dispatch:        # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch latest requests version from conda-forge
+        id: latest
+        run: |
+          VERSION=$(curl -sf "https://api.anaconda.org/package/conda-forge/requests" \
+            | python3 -c "import sys, json; print(json.load(sys.stdin)['latest_version'])")
+          echo "requests=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Latest requests: $VERSION"
+
+      - name: Read current versions from metagraph_search.xml
+        id: current
+        run: |
+          REQUESTS=$(grep -oP '(?<=<requirement type="package" version=")[^"]+(?=">requests)' metagraph_search.xml)
+          echo "requests=$REQUESTS" >> "$GITHUB_OUTPUT"
+          echo "Current requests: $REQUESTS"
+
+      - name: Compare versions
+        id: diff
+        run: |
+          if [ "${{ steps.latest.outputs.requests }}" != "${{ steps.current.outputs.requests }}" ]; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "Update available: requests ${{ steps.current.outputs.requests }} → ${{ steps.latest.outputs.requests }}"
+          else
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "Already up to date, nothing to do."
+          fi
+
+      - name: Bump versions in metagraph_search.xml
+        if: steps.diff.outputs.needed == 'true'
+        env:
+          OLD_REQUESTS: ${{ steps.current.outputs.requests }}
+          NEW_REQUESTS: ${{ steps.latest.outputs.requests }}
+        run: |
+          python3 - <<'EOF'
+          import os
+
+          old_requests = os.environ["OLD_REQUESTS"]
+          new_requests = os.environ["NEW_REQUESTS"]
+
+          with open("metagraph_search.xml") as f:
+              content = f.read()
+
+          content = content.replace(
+              f'<requirement type="package" version="{old_requests}">requests</requirement>',
+              f'<requirement type="package" version="{new_requests}">requests</requirement>',
+          )
+
+          with open("metagraph_search.xml", "w") as f:
+              f.write(content)
+
+          print(f"Updated requests: {old_requests} → {new_requests}")
+          EOF
+
+      - name: Open Pull Request
+        if: steps.diff.outputs.needed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: update/requests-${{ steps.latest.outputs.requests }}
+          title: "chore(deps): bump requests ${{ steps.current.outputs.requests }} → ${{ steps.latest.outputs.requests }}"
+          body: |
+            Automated monthly dependency check found a new release.
+
+            | Package | Old | New |
+            |---------|-----|-----|
+            | requests | `${{ steps.current.outputs.requests }}` | `${{ steps.latest.outputs.requests }}` |
+
+            ### Before merging
+            - [ ] Review the [requests changelog](https://requests.readthedocs.io/en/latest/community/updates/) for breaking changes
+            - [ ] Run the planemo test locally:
+              ```bash
+              planemo test metagraph_search.xml
+              ```
+            - [ ] After merging, publish to ToolShed:
+              ```bash
+              planemo shed_update --shed_target toolshed
+              ```
+          commit-message: "chore(deps): bump requests to ${{ steps.latest.outputs.requests }}"
+          labels: dependencies

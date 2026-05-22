@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<!-- Empty resolvers: no conda, Galaxy will use whatever python/Rscript is in PATH -->
+<dependency_resolvers>
+</dependency_resolvers>

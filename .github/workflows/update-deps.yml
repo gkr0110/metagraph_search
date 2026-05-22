@@ -15,6 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Fetch latest requests version from conda-forge
         id: latest
         run: |
@@ -41,7 +46,7 @@ jobs:
             echo "Already up to date, nothing to do."
           fi
 
-      - name: Bump versions in metagraph_search.xml
+      - name: Bump version in metagraph_search.xml
         if: steps.diff.outputs.needed == 'true'
         env:
           OLD_REQUESTS: ${{ steps.current.outputs.requests }}
@@ -50,22 +55,65 @@ jobs:
           python3 - <<'EOF'
           import os
 
-          old_requests = os.environ["OLD_REQUESTS"]
-          new_requests = os.environ["NEW_REQUESTS"]
+          old = os.environ["OLD_REQUESTS"]
+          new = os.environ["NEW_REQUESTS"]
 
           with open("metagraph_search.xml") as f:
               content = f.read()
 
           content = content.replace(
-              f'<requirement type="package" version="{old_requests}">requests</requirement>',
-              f'<requirement type="package" version="{new_requests}">requests</requirement>',
+              f'<requirement type="package" version="{old}">requests</requirement>',
+              f'<requirement type="package" version="{new}">requests</requirement>',
           )
 
           with open("metagraph_search.xml", "w") as f:
               f.write(content)
 
-          print(f"Updated requests: {old_requests} → {new_requests}")
+          print(f"Updated requests: {old} → {new}")
           EOF
+
+      - name: Install planemo and new requests version
+        if: steps.diff.outputs.needed == 'true'
+        run: |
+          pip install planemo requests==${{ steps.latest.outputs.requests }}
+
+      - name: Run planemo test
+        if: steps.diff.outputs.needed == 'true'
+        id: test
+        run: |
+          set +e
+          OUTPUT=$(planemo test \
+            --dependency_resolvers_config_file dependency_resolvers_conf.xml \
+            --test_timeout 120 \
+            metagraph_search.xml 2>&1)
+          EXIT_CODE=$?
+
+          echo "$OUTPUT" > /tmp/test_output.txt
+
+          # Extract the summary line (e.g. "1 passed, 0 failed")
+          SUMMARY=$(echo "$OUTPUT" | grep -E "passed|failed" | tail -3)
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "status=passed" >> "$GITHUB_OUTPUT"
+            echo "badge=✅ Tests passed" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=failed" >> "$GITHUB_OUTPUT"
+            echo "badge=❌ Tests failed" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Store multiline summary safely
+          {
+            echo "summary<<EOF"
+            echo "$SUMMARY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          # Store last 40 lines of output for the PR body
+          {
+            echo "log<<EOF"
+            echo "$OUTPUT" | tail -40
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Open Pull Request
         if: steps.diff.outputs.needed == 'true'
@@ -81,12 +129,31 @@ jobs:
             |---------|-----|-----|
             | requests | `${{ steps.current.outputs.requests }}` | `${{ steps.latest.outputs.requests }}` |
 
-            ### Before merging
+            ---
+
+            ## Pre-merge test result
+
+            ${{ steps.test.outputs.badge }}
+
+            ```
+            ${{ steps.test.outputs.summary }}
+            ```
+
+            <details>
+            <summary>Full planemo test output</summary>
+
+            ```
+            ${{ steps.test.outputs.log }}
+            ```
+
+            </details>
+
+            ---
+
+            ${{ steps.test.outputs.status == 'passed' && '**✅ Safe to merge** — tests pass with the new version.' || '**❌ Do not merge** — tests failed. Review the output above before proceeding.' }}
+
+            ### Remaining checklist
             - [ ] Review the [requests changelog](https://requests.readthedocs.io/en/latest/community/updates/) for breaking changes
-            - [ ] Run the planemo test locally:
-              ```bash
-              planemo test metagraph_search.xml
-              ```
             - [ ] After merging, publish to ToolShed:
               ```bash
               planemo shed_update --shed_target toolshed
